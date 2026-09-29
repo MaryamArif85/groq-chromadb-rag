@@ -1,0 +1,23 @@
+About Groq ChromaDB RAG System
+
+
+1. What is Groq?
+Groq is a company that makes ultra-fast AI inference hardware called LPU (Language Processing Unit). It can run large language models (LLMs) like Llama 3, Mixtral, Gemma at 10x faster speed than normal GPUs. Developers use Groq API which is OpenAI compatible. It is very cheap and very fast for real-time applications.
+
+2. What is ChromaDB?
+ChromaDB is an open-source vector database. It is used to store embeddings. Embeddings are numerical representation of text. When you have a lot of documents, you convert them into vectors and store in ChromaDB. Later when user asks a question, you convert question into vector and find similar documents using cosine similarity. It is lightweight and runs locally, no server needed.
+
+3. What is RAG?
+RAG stands for Retrieval Augmented Generation. It is a technique to make LLM answer from your own data. The workflow is:
+Step 1: Ingest - Load all txt, pdf, md files from data folder.
+Step 2: Chunking - Split documents into small chunks of 500 tokens.
+Step 3: Embedding - Use sentence-transformers model all-MiniLM-L6-v2 to convert chunks to vectors.
+Step 4: Store - Save vectors in ChromaDB persistent storage.
+Step 5: Query - User asks question, we search ChromaDB for top 3 relevant chunks.
+Step 6: Generation - We send those chunks + user question to Groq LLM (llama3-70b-8192) and LLM generates final answer with context.
+
+4. Project Architecture
+This project uses FastAPI for backend API, Uvicorn as server, Python 3.10+, Groq for LLM, ChromaDB for vector DB, sentence-transformers for embeddings. The data folder contains knowledge base. The app folder contains groq_service.py, vector_store.py, and loader.py. The api.py file exposes /query endpoint. The ingest.py file builds the vector database.
+
+5. Benefits of this Stack
+Fast response under 1 second, works offline for vector search, no OpenAI cost, supports multiple file types txt, pdf, md, scalable to thousands of documents, easy to deploy on Render or Railway.

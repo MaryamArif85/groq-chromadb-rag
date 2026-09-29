@@ -1,0 +1,44 @@
+RAG Chunking and Retrieval - Complete Deep Dive
+
+
+1. What is Chunking and Why it Matters?
+Chunking is the most underrated step in RAG. Bad chunks = bad retrieval = bad answers. LLMs have context limits, you can't feed entire 50-page document. So you split into chunks, embed each, retrieve most relevant. Without chunking: [50-page doc] -> 1 diluted embedding -> bad retrieval. With chunking: [50-page doc] -> 200 focused chunks -> 200 precise embeddings -> accurate retrieval.
+
+2. Chunking Strategies (Simple to Advanced)
+- Fixed-Size Chunking: Splits every N characters (e.g., 500). Pros: Simple, fast. Cons: Cuts sentences in half, splits ideas mid-thought. Best for quick prototyping.
+- Recursive Character Chunking (Industry Standard): Splits hierarchically using double line breaks, then single breaks, then punctuation. Preserves natural paragraph and sentence structures. This is default recommendation for most use cases.
+- Sentence-Based Chunking: Split on sentence boundaries, group N sentences per chunk. Never breaks mid-sentence. Best for legal, articles.
+- Semantic Chunking: Group sentences by meaning similarity using embeddings. Start new chunk when topic shifts. Each chunk is about one thing. Best for long docs with multiple topics, research papers. Slower but best accuracy.
+- Document-Aware Chunking: Parses Markdown headers, HTML tables, PDF boxes to keep tables and code together.
+- Agentic Chunking: Use LLM to decide how much text to include. Highest quality but expensive.
+- Late Chunking (2024 Innovation): Embed full doc first with long-context model, then split vectors. Improves retrieval 10-12% for pronouns. Example: "Berlin is capital. Its population is 3.85M" - traditional loses "Its", late chunking preserves Berlin context.
+- Hierarchical / Small-to-Big: Retrieve small chunks, return parent context to LLM.
+
+3. Optimal Chunk Size
+Use Case -> Recommended Size
+Q&A -> 300-500 tokens (focused, precise)
+Summarization -> 500-1000 tokens (more context)
+Code docs -> 200-400 tokens (function-level)
+Legal/medical -> 400-600 tokens (clause-level)
+General-purpose -> Start with 256-512 tokens, 15% overlap.
+
+4. Why Overlap Matters (10-20% Rule)
+Even with good chunking, you lose context at boundaries. Overlap solves it: Chunk 1: sentences 1-10, Chunk 2: sentences 8-17 (overlaps with 1), Chunk 3: sentences 15-24 (overlaps with 2). This way ideas spanning boundaries still captured. Production uses 10-20% overlap.
+
+5. Retrieval Stage - Where Quality Ceiling is Set
+Pipeline: Ingestion -> Chunking -> Embedding -> Indexing -> Retrieval -> Generation. The best LLM cannot compensate for irrelevant chunks. Invest optimization in retrieval.
+Retrieval best practices: Start with k=4-6 docs, use hybrid search (dense BGE-M3 + sparse BM25), add reranking (ColBERT v2 or cross-encoder), filter by metadata (source, page), use Reciprocal Rank Fusion.
+If missing relevant docs -> increase k, use hybrid search. If too much irrelevant -> add reranking, reduce k. If hallucinations -> improve faithfulness prompt.
+Evaluation metrics: Context Recall (did right chunk get retrieved?), Context Precision (how much retrieved is relevant?), Precision@k, Recall@k, MRR, NDCG. Use Ragas or DeepEval.
+
+6. Embedding and Indexing
+Embeddings map words to dense mathematical coordinates, capturing conceptual relationships not keyword matches. Use sentence-transformers all-MiniLM-L6-v2 or BGE-M3. Store in ChromaDB, Weaviate, or MongoDB Atlas Vector Search with HNSW index.
+
+7. Best Practices Checklist
+- Start with structure, understand document layout
+- Preserve meaning, don't split mid-thought
+- Test chunk sizes, one size doesn't fit all
+- Overlap 10-20%
+- Tag everything with metadata
+- Use hierarchy for structured content
+- Monitor and refine with real results
